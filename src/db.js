@@ -9,13 +9,18 @@ const connection = mysql.createConnection({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
-  port1: process.env.PORT,
-  ssl: { rejectUnauthorized: true }
+  ssl: {
+    // ✅ Ignore les certificats auto-signés de Railway
+    rejectUnauthorized: false
+  }
 });
 
 connection.connect(err => {
-  if (err) console.error('Erreur de connexion MySQL :', err);
-  else console.log('Connexion réussie à la base Railway ✅');
+  if (err) {
+    console.error('Erreur de connexion MySQL :', err);
+  } else {
+    console.log('Connexion réussie à la base Railway ✅');
+  }
 });
 
 export default connection;
