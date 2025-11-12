@@ -5,7 +5,9 @@ import session from "express-session";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import connection from "./src/db.js";
 import poubellesRoutes from "./src/routes/poubelles.js";
+import signalementsRoutes from "./routes/signalements.js";
 import dotenv from "dotenv";
+
 
 dotenv.config();
 const app = express();
@@ -14,6 +16,7 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 app.use("/api/poubelles", poubellesRoutes);
+app.use("/api/signalements", signalementsRoutes);
 
 app.use(
   session({
