@@ -6,7 +6,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import connection from "./src/db.js";
 import poubellesRoutes from "./src/routes/poubelles.js";
 import signalementsRoutes from "./src/routes/signalements.js";
-import login from "./src/routes/auth.js;
+import login from "./src/routes/auth.js";
 import dotenv from "dotenv";
 
 
