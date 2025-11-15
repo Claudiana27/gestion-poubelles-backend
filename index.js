@@ -6,20 +6,24 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import connection from "./src/db.js";
 import poubellesRoutes from "./src/routes/poubelles.js";
 import signalementsRoutes from "./src/routes/signalements.js";
-import login from "./src/routes/auth.js";
+import login from "./src/routes/auth.js"; // ✅ correction ici
 import dotenv from "dotenv";
-
 
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: "*" }));
+// =============================
+// 1️⃣ Middlewares généraux
+// =============================
 app.use(express.json());
+app.use(cors({
+  origin: ["http://localhost:5173", "frontendmobile://auth"], // frontend web + mobile
+  credentials: true
+}));
 
-app.use("/api/poubelles", poubellesRoutes);
-app.use("/api/signalements", signalementsRoutes);
-app.use("/api/login", login);
-
+// =============================
+// 2️⃣ Session et Passport
+// =============================
 app.use(
   session({
     secret: "gestionpoubelles",
@@ -31,7 +35,14 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // =============================
-// 1️⃣ Configuration Google OAuth
+// 3️⃣ Routes API
+// =============================
+app.use("/api/poubelles", poubellesRoutes);
+app.use("/api/signalements", signalementsRoutes);
+app.use("/api/login", login); // route login
+
+// =============================
+// 4️⃣ Configuration Google OAuth
 // =============================
 passport.use(
   new GoogleStrategy(
@@ -44,7 +55,6 @@ passport.use(
       const { id, displayName, emails } = profile;
       const email = emails[0].value;
 
-      // Vérifie si l'utilisateur existe déjà
       connection.query(
         "SELECT * FROM users WHERE google_id = ?",
         [id],
@@ -53,7 +63,6 @@ passport.use(
           if (results.length > 0) {
             return done(null, results[0]);
           } else {
-            // Sinon, l’insérer
             const user = { google_id: id, display_name: displayName, email };
             connection.query("INSERT INTO users SET ?", user, (err, res) => {
               if (err) return done(err);
@@ -71,7 +80,7 @@ passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((user, done) => done(null, user));
 
 // =============================
-// 2️⃣ Routes d’authentification
+// 5️⃣ Routes Auth Google
 // =============================
 app.get("/", (req, res) => res.send("Backend gestion poubelles ✅"));
 
@@ -92,5 +101,8 @@ app.get("/logout", (req, res) => {
   req.logout(() => res.redirect("/"));
 });
 
+// =============================
+// 6️⃣ Lancement serveur
+// =============================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`✅ Backend sur le port ${PORT}`));
