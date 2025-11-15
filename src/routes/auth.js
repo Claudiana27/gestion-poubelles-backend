@@ -9,7 +9,7 @@ router.post("/login", async (req, res) => {
   const { matricule, password } = req.body;
 
   try {
-    const [rows] = await db.execute("SELECT * FROM admins WHERE matricule = ?", [matricule]);
+    const [rows] = await connection.execute("SELECT * FROM admins WHERE matricule = ?", [matricule]);
 
     if (rows.length === 0) {
       return res.status(401).json({ message: "Matricule incorrect" });
