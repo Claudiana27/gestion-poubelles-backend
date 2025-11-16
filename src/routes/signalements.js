@@ -51,7 +51,7 @@ router.post("/", (req, res) => {
           "UPDATE poubelles SET bloquee = 1, etat = ? WHERE id = ?",
           [capacite, poubelle_id],
           (err) => {
-            if (err) return res.status(500).json({ error: "Erreur mise à jour poubelle" });
+            if (err) return res.status(500).json({ error: "Signalement envoyé ! Merci" });
 
             res.json({
               message: "Signalement ajouté et poubelle bloquée",
