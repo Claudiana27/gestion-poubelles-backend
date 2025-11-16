@@ -3,25 +3,27 @@ import connection from "../db.js";
 
 const router = express.Router();
 
-// 🔹 Récupérer toutes les poubelles (admin + mobile) avec dernier signalement
 router.get("/", (req, res) => {
   const sql = `
-    SELECT p.*,
-      (
-        SELECT s.capacite
-        FROM signalements s
-        WHERE s.poubelle_id = p.id
-        ORDER BY s.date_signalement DESC
-        LIMIT 1
-      ) AS capacite_signalement
+    SELECT p.*, s.capacite AS capacite_signalement, s.id AS signalement_id
     FROM poubelles p
+    LEFT JOIN (
+      SELECT s1.*
+      FROM signalements s1
+      JOIN (
+        SELECT poubelle_id, MAX(date_signalement) AS max_date
+        FROM signalements
+        GROUP BY poubelle_id
+      ) s2 ON s1.poubelle_id = s2.poubelle_id AND s1.date_signalement = s2.max_date
+    ) s ON p.id = s.poubelle_id
   `;
 
   connection.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: "Erreur récupération" });
+    if (err) return res.status(500).json({ error: "Erreur récupération poubelles" });
     res.json(results);
   });
 });
+
 
 // 🔹 Ajouter une nouvelle poubelle
 router.post("/", (req, res) => {
