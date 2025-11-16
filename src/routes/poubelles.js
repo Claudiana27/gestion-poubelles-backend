@@ -62,7 +62,7 @@ router.put("/etat/:id", (req, res) => {
 // 🔹 Bloquer une poubelle (après signalement)
 router.put("/bloquer/:id", (req, res) => {
   const { id } = req.params;
-  const { etat_signalement } = req.body; // nouvelle valeur pour le signalement
+  const { etat_signalement } = req.body; // état correspondant au signalement
 
   connection.query(
     "UPDATE poubelles SET bloquee = 1, etat = ? WHERE id = ?",
@@ -78,12 +78,22 @@ router.put("/bloquer/:id", (req, res) => {
 router.put("/debloquer/:id", (req, res) => {
   const { id } = req.params;
 
+  // 1️⃣ Remettre l'état initial et débloquer
   connection.query(
     "UPDATE poubelles SET bloquee = 0, etat = etat_initial WHERE id = ?",
     [id],
     (err) => {
       if (err) return res.status(500).json({ error: "Erreur déblocage" });
-      res.json({ message: "Poubelle débloquée et réinitialisée à l'état initial !" });
+
+      // 2️⃣ Supprimer le dernier signalement pour que le mobile actualise le message
+      connection.query(
+        "DELETE FROM signalements WHERE poubelle_id = ?",
+        [id],
+        (err2) => {
+          if (err2) console.error("Erreur suppression signalements:", err2);
+          res.json({ message: "Poubelle débloquée et réinitialisée à l'état initial !" });
+        }
+      );
     }
   );
 });
