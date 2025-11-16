@@ -3,7 +3,7 @@ import connection from "../db.js";
 
 const router = express.Router();
 
-// 🔹 Récupérer toutes les poubelles avec dernier signalement
+// 🔹 Récupérer toutes les poubelles + dernier signalement
 router.get("/", (req, res) => {
   const sql = `
     SELECT p.*, s.capacite AS capacite_signalement, s.id AS signalement_id
@@ -25,30 +25,26 @@ router.get("/", (req, res) => {
   });
 });
 
-// 🔹 Ajouter une nouvelle poubelle
+// 🔹 Ajouter une poubelle
 router.post("/", (req, res) => {
-  const { nom, latitude, longitude, capacite, etat_initial } = req.body;
+  const { nom, latitude, longitude, capacite } = req.body;
 
-  if (!nom || !latitude || !longitude || !capacite || !etat_initial) {
+  if (!nom || !latitude || !longitude || !capacite) {
     return res.status(400).json({ error: "Champs manquants" });
   }
 
   const sql = `
-    INSERT INTO poubelles (nom, latitude, longitude, capacite, etat, etat_initial, bloquee)
-    VALUES (?, ?, ?, ?, ?, ?, 0)
+    INSERT INTO poubelles (nom, latitude, longitude, capacite, etat, bloquee)
+    VALUES (?, ?, ?, ?, 'vide', 0)
   `;
 
-  connection.query(
-    sql,
-    [nom, latitude, longitude, capacite, etat_initial, etat_initial],
-    (err, result) => {
-      if (err) return res.status(500).json({ error: "Erreur insertion" });
-      res.json({ message: "Poubelle ajoutée", id: result.insertId });
-    }
-  );
+  connection.query(sql, [nom, latitude, longitude, capacite], (err, result) => {
+    if (err) return res.status(500).json({ error: "Erreur insertion" });
+    res.json({ message: "Poubelle ajoutée", id: result.insertId });
+  });
 });
 
-// 🔹 Changer l'état d'une poubelle (couleur icône)
+// 🔹 Mettre à jour l'état manuellement
 router.put("/etat/:id", (req, res) => {
   const { id } = req.params;
   const { etat } = req.body;
@@ -59,41 +55,37 @@ router.put("/etat/:id", (req, res) => {
   });
 });
 
-// 🔹 Bloquer une poubelle (après signalement)
+// 🔹 Bloquer une poubelle
 router.put("/bloquer/:id", (req, res) => {
   const { id } = req.params;
-  const { etat_signalement } = req.body; // état correspondant au signalement
+  const { capacite } = req.body;
 
   connection.query(
     "UPDATE poubelles SET bloquee = 1, etat = ? WHERE id = ?",
-    [etat_signalement, id],
+    [capacite, id],
     (err) => {
       if (err) return res.status(500).json({ error: "Erreur blocage" });
-      res.json({ message: "Poubelle bloquée et état mis à jour !" });
+      res.json({ message: "Poubelle bloquée !" });
     }
   );
 });
 
-// 🔹 Débloquer une poubelle (après intervention)
+// 🔹 Débloquer une poubelle
 router.put("/debloquer/:id", (req, res) => {
   const { id } = req.params;
 
-  // 1️⃣ Remettre l'état initial et débloquer
+  // 1️⃣ Débloquer et remettre état = vide (triangle bleu)
   connection.query(
-    "UPDATE poubelles SET bloquee = 0, etat = etat_initial WHERE id = ?",
+    "UPDATE poubelles SET bloquee = 0, etat = 'vide' WHERE id = ?",
     [id],
     (err) => {
       if (err) return res.status(500).json({ error: "Erreur déblocage" });
 
-      // 2️⃣ Supprimer le dernier signalement pour que le mobile actualise le message
-      connection.query(
-        "DELETE FROM signalements WHERE poubelle_id = ?",
-        [id],
-        (err2) => {
-          if (err2) console.error("Erreur suppression signalements:", err2);
-          res.json({ message: "Poubelle débloquée et réinitialisée à l'état initial !" });
-        }
-      );
+      // 2️⃣ Supprimer tous les signalements
+      connection.query("DELETE FROM signalements WHERE poubelle_id = ?", [id], (err2) => {
+        if (err2) console.error(err2);
+        res.json({ message: "Poubelle débloquée et remise à vide !" });
+      });
     }
   );
 });
