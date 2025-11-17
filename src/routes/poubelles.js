@@ -90,4 +90,42 @@ router.put("/debloquer/:id", (req, res) => {
   );
 });
 
+// 🔹 Modifier une poubelle
+router.put("/:id", (req, res) => {
+  const { id } = req.params;
+  const { nom, latitude, longitude, capacite } = req.body;
+
+  if (!nom || !latitude || !longitude || !capacite) {
+    return res.status(400).json({ error: "Champs manquants" });
+  }
+
+  const sql = `
+    UPDATE poubelles 
+    SET nom = ?, latitude = ?, longitude = ?, capacite = ?
+    WHERE id = ?
+  `;
+
+  connection.query(sql, [nom, latitude, longitude, capacite, id], (err) => {
+    if (err) return res.status(500).json({ error: "Erreur modification" });
+    res.json({ message: "Poubelle modifiée" });
+  });
+});
+
+// 🔹 Supprimer une poubelle
+router.delete("/:id", (req, res) => {
+  const { id } = req.params;
+
+  // Supprimer d'abord ses signalements
+  connection.query("DELETE FROM signalements WHERE poubelle_id = ?", [id], (err1) => {
+    if (err1) return res.status(500).json({ error: "Erreur suppression signalements" });
+
+    // Puis la poubelle
+    connection.query("DELETE FROM poubelles WHERE id = ?", [id], (err2) => {
+      if (err2) return res.status(500).json({ error: "Erreur suppression poubelle" });
+      res.json({ message: "Poubelle supprimée" });
+    });
+  });
+});
+
+
 export default router;

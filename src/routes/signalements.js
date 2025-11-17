@@ -35,7 +35,7 @@ router.post("/", (req, res) => {
 
       if (rows[0].bloquee === 1) {
         return res.status(403).json({
-          error: "Cette poubelle est en attente d’intervention."
+          error: "Cette poubelle a déjà été signalée. Merci, en attente d'intervention."
         });
       }
 
@@ -44,17 +44,17 @@ router.post("/", (req, res) => {
         "INSERT INTO signalements (poubelle_id, capacite) VALUES (?, ?)",
         [poubelle_id, capacite],
         (err, results) => {
-          if (err) return res.status(500).json({ error: "Erreur ajout signalement" });
+          if (err) return res.status(500).json({ error: "Signalement envoyé ! Merci !" });
 
           // Bloquer + mettre état = capacite
           connection.query(
             "UPDATE poubelles SET bloquee = 1, etat = ? WHERE id = ?",
             [capacite, poubelle_id],
             (err) => {
-              if (err) return res.status(500).json({ error: "Erreur MAJ poubelle" });
+              if (err) return res.status(500).json({ error: "Signalement envoyé ! Merci !" });
 
               res.json({
-                message: "Signalement ajouté & poubelle bloquée",
+                message: "Signalement ajouté",
                 id: results.insertId
               });
             }
