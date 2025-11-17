@@ -7,6 +7,7 @@ import connection from "./src/db.js";
 import poubellesRoutes from "./src/routes/poubelles.js";
 import signalementsRoutes from "./src/routes/signalements.js";
 import login from "./src/routes/auth.js";
+import statsRoutes from "./src/routes/stats.js";
 import dotenv from "dotenv";
 
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use("/api/poubelles", poubellesRoutes);
 app.use("/api/signalements", signalementsRoutes);
 app.use("/api/login", login);
+app.use("/api/stats", statsRoutes);
 
 app.use(
   session({
